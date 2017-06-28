@@ -13,5 +13,13 @@ class Parser(Query):
         parser.add_argument("-tn", "--team-names", help="The team names to query against.")
         parser.add_argument("-gm", "--game-mode", choices=['casual', 'ranked'], help="The game mode to query against.")
 
+    def getArguments(self, args):
+        return {"page[offset]": args.offset,
+                "page[limit]": args.limit,
+                "filter[playerNames]": args.player_names,
+                "filter[playerIds": args.player_ids,
+                "filter[teamNames]": args.team_names,
+                "filter[gameMode]": args.game_mode}
+
     def parser(self, data):
         pass

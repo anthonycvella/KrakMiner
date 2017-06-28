@@ -3,8 +3,15 @@ import csv
 import os
 from parsers import QueryParsers
 
+# The default output directory
+DEFAULT_OUTPUT_DIR = os.getcwd() + "/Results"
+
 # Setup function to verify the 'gamelocker' package is installed
 def setup():
+    # Verify the default output directory exists (./Results), if not create it
+    if not os.path.exists(DEFAULT_OUTPUT_DIR):
+        os.makedirs(DEFAULT_OUTPUT_DIR)
+
     try:
         import gamelocker as gamelocker
         return gamelocker
@@ -32,7 +39,7 @@ def parser(gamelocker):
     general_group = argparse.ArgumentParser(add_help=False)
     general_group.add_argument("-k", "--key", required=True, help="Your unique Vainglory Developer API key. If you don't have one, register for one at http://www.developer.vainglorygame.com")
     general_group.add_argument("-r", "--region", choices=region_choices, required=True, help="The region to perform the query on.")
-    general_group.add_argument("-o", "--output", default=os.getcwd() + "/Results", help="The output directory of the parsed data.")
+    general_group.add_argument("-o", "--output", default=DEFAULT_OUTPUT_DIR, help="The output directory of the parsed data.")
     general_group.add_argument("-v", "--verbose", action="store_true", help="Enables verbose logging output.")
 
     # Top level parser containing the general group & subparsers for the support queries
@@ -58,10 +65,9 @@ def parser(gamelocker):
     # Parse the arguments from the arg parser
     args = top_parser.parse_args()
 
-    def matches(general_parameters, player_name):
+    def matches(general_parameters, query_arguments):
         api = gamelocker.Vainglory(general_parameters.key)
-        args = {'page[limit]': '1', 'filter[playerNames]': player_name, 'sort': '-createdAt'}
-        data = api.matches(args, general_parameters.region, toObject=True)
+        data = api.matches(query_arguments, general_parameters.region, toObject=True)
 
         with open(general_parameters.output + "/KrakMinerDump.csv", "w", newline="") as csvfile:
             # Column names for the spreadsheet
@@ -75,7 +81,7 @@ def parser(gamelocker):
                 # Get the players participant object
                 for roster in match.rosters:
                     for participant in roster["participants"]:
-                        if participant["player"]["name"] == player_name:
+                        if participant["player"]["name"] == query_arguments["filter[playerNames]"]:
                             participant_obj = participant
 
                 # Create empty items list array
@@ -124,7 +130,7 @@ def parser(gamelocker):
     general_parameters = GeneralParameters(args.key, args.region, args.output, args.verbose)
 
     # Find the matching function to call based on the query requested
-    queries = {"matches": lambda: matches(general_parameters, args.player_names)}
+    queries = {"matches": lambda: matches(general_parameters, parser_object.getArguments(args))}
     queries[args.query]()
 
 # Main entry function

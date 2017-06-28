@@ -20,6 +20,9 @@ class Query(object):
     def arguments(self, parser):
         pass
 
+    def getArguments(self, args):
+        pass
+
     def parser(self, data):
         pass
 
