@@ -1,7 +1,7 @@
 import argparse
 import csv
 import os
-import QueryParsers
+from parsers import QueryParsers
 
 # Setup function to verify the 'gamelocker' package is installed
 def setup():
@@ -32,7 +32,7 @@ def parser(gamelocker):
     subparsers = top_parser.add_subparsers(dest="query")
 
     # Iterate over each parser to configure it and add it as a subparser
-    for item in QueryParsers.getParsers():
+    for item in QueryParsers.getAllParsers():
         # Get the function reference of the parser function
         func = getattr(QueryParsers.Parsers, item)
 
