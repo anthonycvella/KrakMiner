@@ -17,9 +17,10 @@ regionChoices = ['na', 'eu', 'sa', 'ea', 'sg', 'tournament-na', 'tournament-eu',
 
 # API level parser for generic API required parameters
 api_group = argparse.ArgumentParser(add_help=False)
-api_group.add_argument("-k", "--key", help="Your unique Vainglory Developer API key. If you don't have one, register for one at http://www.developer.vainglorygame.com")
-api_group.add_argument("-v", "--verbose", action="store_true", help="Enables verbose logging output.")
+api_group.add_argument("-k", "--key", required=True, help="Your unique Vainglory Developer API key. If you don't have one, register for one at http://www.developer.vainglorygame.com")
 api_group.add_argument("-r", "--region", choices=regionChoices, required=True, help="The region you'd like to perform the query on.")
+api_group.add_argument("-o", "--output", default=os.getcwd() + "/Results", help="The output directory of the parsed data.")
+api_group.add_argument("-v", "--verbose", action="store_true", help="Enables verbose logging output.")
 
 # Top level parser containg the api group & subparsers for the support queries
 parser = argparse.ArgumentParser(add_help=False, parents=[api_group])
@@ -27,11 +28,19 @@ subparsers = parser.add_subparsers(dest="query")
 
 # Iterate over each parser to configure it and add it as a subparser
 for item in QueryParsers.getParsers():
+    # Get the function reference of the parser function
     func = getattr(QueryParsers.Parsers, item)
+
+    # Verify this is a valid function that can be called
     if callable(func):
-        parserObject = func()
-        queryParser = subparsers.add_parser(parserObject.getName())
-        parserObject.arguments(queryParser)
+        # Call the function and return its object
+        parser_object = func()
+
+        # Add the parser to our subparsers by the name of the parser
+        query_parser = subparsers.add_parser(parser_object.getName())
+
+        # Add the necessary arguments to the parser
+        parser_object.arguments(query_parser)
 
 # Parse the arguments from the arg parser
 args = parser.parse_args()
