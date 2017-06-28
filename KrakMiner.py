@@ -15,20 +15,28 @@ def setup():
     # Import the supporting library for the VGAPI
     import gamelocker
 
+# Container class for parameters of the general parser
+class GeneralParameters(object):
+    def __init__(self, key, region, output, verbose):
+        self.key        = key
+        self.region     = region
+        self.output     = output
+        self.verbose    = verbose
+
 # Parser function (main program)
 def parser(gamelocker):
     # The supported regions the API can reach
     region_choices = ['na', 'eu', 'sa', 'ea', 'sg', 'tournament-na', 'tournament-eu', 'tournament-sa', 'tournament-ea', 'tournament-sg']
 
-    # API level parser for generic API required parameters
-    api_group = argparse.ArgumentParser(add_help=False)
-    api_group.add_argument("-k", "--key", required=True, help="Your unique Vainglory Developer API key. If you don't have one, register for one at http://www.developer.vainglorygame.com")
-    api_group.add_argument("-r", "--region", choices=region_choices, required=True, help="The region to perform the query on.")
-    api_group.add_argument("-o", "--output", default=os.getcwd() + "/Results", help="The output directory of the parsed data.")
-    api_group.add_argument("-v", "--verbose", action="store_true", help="Enables verbose logging output.")
+    # General level parser for generic API parameters
+    general_group = argparse.ArgumentParser(add_help=False)
+    general_group.add_argument("-k", "--key", required=True, help="Your unique Vainglory Developer API key. If you don't have one, register for one at http://www.developer.vainglorygame.com")
+    general_group.add_argument("-r", "--region", choices=region_choices, required=True, help="The region to perform the query on.")
+    general_group.add_argument("-o", "--output", default=os.getcwd() + "/Results", help="The output directory of the parsed data.")
+    general_group.add_argument("-v", "--verbose", action="store_true", help="Enables verbose logging output.")
 
-    # Top level parser containg the api group & subparsers for the support queries
-    top_parser = argparse.ArgumentParser(add_help=False, parents=[api_group])
+    # Top level parser containing the general group & subparsers for the support queries
+    top_parser = argparse.ArgumentParser(add_help=False, parents=[general_group])
     subparsers = top_parser.add_subparsers(dest="query")
 
     # Iterate over each parser to configure it and add it as a subparser
@@ -50,15 +58,12 @@ def parser(gamelocker):
     # Parse the arguments from the arg parser
     args = top_parser.parse_args()
 
-    def matches(player_name, api_key):
-        api = gamelocker.Vainglory(api_key)
+    def matches(general_parameters, player_name):
+        api = gamelocker.Vainglory(general_parameters.key)
         args = {'page[limit]': '1', 'filter[playerNames]': player_name, 'sort': '-createdAt'}
-        data = api.matches(args, toObject=True)
+        data = api.matches(args, general_parameters.region, toObject=True)
 
-        # Get the home directory path
-        home_path = os.path.join(os.environ["HOMEPATH"], "Desktop")
-
-        with open(home_path + "/KrakMinerDump.csv", "w", newline="") as csvfile:
+        with open(general_parameters.output + "/KrakMinerDump.csv", "w", newline="") as csvfile:
             # Column names for the spreadsheet
             fieldnames = ['match_id', 'player_id', 'player_name', 'actor', 'is_winner', 'ban_team_1', 'ban_team_2', 'item_1', 'item_2', 'item_3', 'item_4', 'item_5', 'item_6']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -115,8 +120,11 @@ def parser(gamelocker):
 
         print("DONE!")
 
+    # Build our general config parameters object
+    general_parameters = GeneralParameters(args.key, args.region, args.output, args.verbose)
+
     # Find the matching function to call based on the query requested
-    queries = {"matches": lambda: matches(args.player_names, args.key)}
+    queries = {"matches": lambda: matches(general_parameters, args.player_names)}
     queries[args.query]()
 
 # Main entry function
