@@ -6,10 +6,10 @@ def getAllParsers():
 
 # Base class of which all query parses derive from
 class Query(object):
-
-    def __init__(self, name, endpointUrl):
+    def __init__(self, name, endpointUrl, fieldnames):
         self.name           = name
         self.endpointUrl    = endpointUrl
+        self.fieldnames     = fieldnames
 
     def getName(self):
         return self.name
@@ -17,13 +17,16 @@ class Query(object):
     def getEndpointUrl(self):
         return self.endpointUrl
 
+    def getFieldnames(self):
+        return self.fieldnames
+
     def arguments(self, parser):
         pass
 
     def getArguments(self, args):
         pass
 
-    def parser(self, data):
+    def parse(self, data):
         pass
 
 # Defines all of the supported parsers
