@@ -2,7 +2,7 @@ import argparse
 from parsers.QueryParsers import Query
 
 # The headers name for the output .CSV file
-FIELDNAMES = ['match_id', 'player_id', 'player_name', 'actor', 'is_winner', 'ban_team_1', 'ban_team_2', 'item_1', 'item_2', 'item_3', 'item_4', 'item_5', 'item_6']
+FIELDNAMES = ['match_id', 'player_id', 'player_name', 'actor', 'is_winner', 'ban_team_1', 'ban_team_2', 'pick_1', 'pick_2', 'pick_3', 'pick_4', 'pick_5', 'pick_6', 'item_1', 'item_2', 'item_3', 'item_4', 'item_5', 'item_6']
 
 class Parser(Query):
     def __init__(self, name="matches", endpointUrl="matches"):
@@ -61,22 +61,32 @@ class Parser(Query):
             # Add is winner to the match dictionary (FIELDNAMES INDEX: 4)
             match_dict.update({FIELDNAMES[4]: participant_obj["winner"]})
 
-            # Get a dictionary of the bans
-            bans_dict = self.getBans(api, match.telemetry.URL)
+            # Get the telemetry data
+            telemetry_data = api.telemetry(match.telemetry.URL)
+
+            # Get the telemetry dict which contains parsed bans and player picks
+            telemetry_dict = self.parseTelemetry(telemetry_data)
 
             # Add ban team 1 to the match dictionary (FIELDNAMES INDEX: 5)
-            match_dict.update({FIELDNAMES[5]: bans_dict["team_1"]})
+            match_dict.update({FIELDNAMES[5]: telemetry_dict["bans"]["team_1"]})
 
             # Add ban team 2 to the match dictionary (FIELDNAMES INDEX: 6)
-            match_dict.update({FIELDNAMES[6]: bans_dict["team_2"]})
+            match_dict.update({FIELDNAMES[6]: telemetry_dict["bans"]["team_2"]})
+
+            # Add picks to the match dictionary (FIELDNAMES INDEX: 7...X)
+            for i, pick in enumerate(telemetry_dict["picks"]):
+                try:
+                    match_dict.update({FIELDNAMES[i + 7]: pick["payload"]["Hero"]})
+                except IndexError:
+                    pass
 
             # Get all items from the participant
             items = self.getItems(participant_obj["items"])
 
-            # Add items to the match dictionary (FIELDNAMES INDEX: 7...X)
+            # Add items to the match dictionary (FIELDNAMES INDEX: 13...X)
             for i, item in enumerate(items):
                 try:
-                    match_dict.update({FIELDNAMES[i + 7]: item})
+                    match_dict.update({FIELDNAMES[i + 13]: item})
                 except IndexError:
                     pass
 
@@ -93,10 +103,9 @@ class Parser(Query):
                     return participant
 
     # Gets the bans of a match
-    def getBans(self, api, telemetryUrl):
+    def getBans(self, data):
         bans = {}
-        telemetry_data = api.telemetry(telemetryUrl)
-        for telemetry in telemetry_data:
+        for telemetry in data:
             if telemetry["type"] == "HeroBan":
                 if telemetry["payload"]["Team"]:
                     if telemetry["payload"]["Team"] == "1":
@@ -114,12 +123,28 @@ class Parser(Query):
 
         return bans
 
+    # Gets the picks of a match
+    def getPicks(self, data):
+        # Create empty picks list
+        picks = []
+
+        # Build the picks list
+        for telemetry in data:
+            # Once we have 6 picks, the max, end searching
+            if len(picks) > 6:
+                break
+
+            if telemetry["type"] == "HeroSelect":
+                picks.append(telemetry)
+
+        return picks
+
     # Gets all items from a match
     def getItems(self, items):
-        # Create empty items list of 6 items (Max amount of items)
+        # Create empty items list of 6 (Max amount of items)
         items_list = ["", "", "", "", "", ""]
 
-        # Build the items array from the participant
+        # Build the items list from the participant
         if items != None:
             for i, item in enumerate(items):
                 try:
@@ -128,3 +153,12 @@ class Parser(Query):
                     pass
 
         return items_list
+
+    # Parses telemetry data into a dictionary of bans and picks
+    def parseTelemetry(self, data):
+        telemetry_dict = {}
+        # Add bans to the dictionary
+        telemetry_dict.update({"bans": self.getBans(data)})
+        # Add picks to the dictionary
+        telemetry_dict.update({"picks": self.getPicks(data)})
+        return telemetry_dict

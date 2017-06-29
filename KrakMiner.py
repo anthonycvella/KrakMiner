@@ -1,5 +1,6 @@
 import argparse
 import csv
+import time
 import os
 from parsers import QueryParsers
 
@@ -73,6 +74,7 @@ def parser():
     queries[args.query]()
 
 def matches(general_parameters, query_arguments, parser_object):
+    start = time.time()
     # Get our api manager
     api = gamelocker.Vainglory(general_parameters.key)
 
@@ -88,7 +90,8 @@ def matches(general_parameters, query_arguments, parser_object):
         writer.writeheader()
         writer.writerows(parsed_data)
 
-        print("DONE!")
+        end = time.time()
+        print("Mining Complete! Total Time Elapsed: ", end - start)
 
 # Main entry function
 def main():
