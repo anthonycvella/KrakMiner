@@ -73,22 +73,22 @@ def parser():
     queries[args.query]()
 
 def matches(general_parameters, query_arguments, parser_object):
-        # Get our api manager
-        api = gamelocker.Vainglory(general_parameters.key)
+    # Get our api manager
+    api = gamelocker.Vainglory(general_parameters.key)
 
-        # Get the raw data from the API
-        data = api.matches(query_arguments, general_parameters.region, toObject=True)
+    # Get the raw data from the API
+    data = api.matches(query_arguments, general_parameters.region, toObject=True)
 
-        # Parse the data from the API
-        parsed_data = parser_object.parse(data, player_name=query_arguments["filter[playerNames]"], api=api)
+    # Parse the data from the API
+    parsed_data = parser_object.parse(data, player_name=query_arguments["filter[playerNames]"], api=api)
 
-        # Write the parsed data to a .csv file
-        with open(general_parameters.output + "/KrakMinerDump.csv", "w", newline="") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=parser_object.getFieldnames())
-            writer.writeheader()
-            writer.writerows(parsed_data)
+    # Write the parsed data to a .csv file
+    with open(general_parameters.output + "/KrakMinerDump.csv", "w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=parser_object.getFieldnames())
+        writer.writeheader()
+        writer.writerows(parsed_data)
 
-            print("DONE!")
+        print("DONE!")
 
 # Main entry function
 def main():
