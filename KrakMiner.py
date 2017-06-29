@@ -30,10 +30,11 @@ def setup():
         os.system('python -m pip install madglory-ezl')
 
     # Import the supporting library for the Vainglory API
-    import gamelocker
+    import gamelocker as gamelocker
+    return gamelocker
 
 # Parser function (main program)
-def parser(gamelocker):
+def parser():
     # General level parser for generic API parameters
     general_group = argparse.ArgumentParser(add_help=False)
     general_group.add_argument("-k", "--key", required=True, help="Your unique Vainglory Developer API key. If you don't have one, register for one at http://www.developer.vainglorygame.com")
@@ -64,7 +65,14 @@ def parser(gamelocker):
     # Parse the arguments from the arg parser
     args = top_parser.parse_args()
 
-    def matches(general_parameters, query_arguments, parser_object):
+    # Build our general config parameters object
+    general_parameters = GeneralParameters(args.key, args.region, args.output, args.verbose)
+
+    # Find the matching function to call based on the query requested
+    queries = {"matches": lambda: matches(general_parameters, parser_object.getArguments(args), parser_object)}
+    queries[args.query]()
+
+def matches(general_parameters, query_arguments, parser_object):
         # Get our api manager
         api = gamelocker.Vainglory(general_parameters.key)
 
@@ -82,20 +90,14 @@ def parser(gamelocker):
 
             print("DONE!")
 
-    # Build our general config parameters object
-    general_parameters = GeneralParameters(args.key, args.region, args.output, args.verbose)
-
-    # Find the matching function to call based on the query requested
-    queries = {"matches": lambda: matches(general_parameters, parser_object.getArguments(args), parser_object)}
-    queries[args.query]()
-
 # Main entry function
 def main():
-    # Run initial setup
+    # Run initial setup and set gamelocker to be a global object
+    global gamelocker
     gamelocker = setup()
 
     # Run the parser
-    parser(gamelocker)
+    parser()
 
 # Initial main entry function
 if __name__ == "__main__":
