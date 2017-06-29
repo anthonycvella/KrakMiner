@@ -102,3 +102,6 @@ ENV/
 
 # CSV Output
 *.csv
+
+# Visual Studio Code
+.vscode/
