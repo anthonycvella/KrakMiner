@@ -26,4 +26,4 @@ _If you do not have a Vainglory Developer Key, you can signup for one at [http:/
 python KrakMiner.py -k [Your API Key] -r na matches -l 50 -pn Snwspeckle
 ```
 
-_This exmaple is executing a `matches` query against the `na` region, with a limit of `50` and a player name of `Snwspeckle`._
+_This example is executing a `matches` query against the `na` region, with a limit of `50` and a player name of `Snwspeckle`._
